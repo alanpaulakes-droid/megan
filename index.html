@@ -355,6 +355,17 @@
       <div class="card-h"><span class="em">🧾</span><h3>Movimientos del mes</h3></div>
       <div class="list" id="mesMovs"></div>
     </div>
+
+    <div class="card">
+      <div class="card-h"><span class="em">💾</span><h3>Respaldo de datos</h3></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Guarda una copia de todo en tu iPhone (app <b>Archivos</b>). Si reinstalas Megan o cambias de teléfono, la restauras con <b>Importar</b>. Hazlo cada cierto tiempo.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="btnExport">⬇️ Exportar respaldo</button>
+        <button class="btn ghost" id="btnImport">⬆️ Importar respaldo</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+      <div id="backupInfo" style="font-size:12px;color:var(--muted);margin-top:12px"></div>
+    </div>
   </section>
 
   <!-- ============ SERVICIOS ============ -->
@@ -463,7 +474,8 @@
   "use strict";
 
   const KEY = "megan_data_v1";
-  const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const BK  = "megan_last_backup";
+  const MONTHS =["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   const SERVICES = [
     {k:"luz",      name:"Luz",            em:"💡"},
     {k:"agua",     name:"Agua",           em:"💧"},
@@ -950,6 +962,53 @@
   $("#cpName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#cpLider").focus(); });
   $("#cpLider").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#cpAdd").click(); });
 
+  // ---------- Respaldo (exportar / importar archivo) ----------
+  function setLastBackup(){ try{ localStorage.setItem(BK, String(Date.now())); }catch(e){} }
+  function renderBackupInfo(){
+    const el=$("#backupInfo"); if(!el) return;
+    const t=localStorage.getItem(BK);
+    if(!t){ el.textContent="Aún no has hecho un respaldo. Recomendado: hazlo ahora."; el.style.color="var(--amber)"; return; }
+    const d=new Date(+t);
+    el.textContent="Último respaldo: "+d.toLocaleDateString("es-CL")+" "+d.toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"});
+    el.style.color="var(--muted)";
+  }
+  function exportData(){
+    const filename="megan-respaldo-"+todayISO()+".json";
+    const blob=new Blob([JSON.stringify(S)],{type:"application/json"});
+    try{
+      const file=new File([blob],filename,{type:"application/json"});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:"Respaldo de Megan"})
+          .then(()=>{ setLastBackup(); renderBackupInfo(); toast("Respaldo guardado ✓"); })
+          .catch(()=>{});
+        return;
+      }
+    }catch(e){}
+    // Fallback: descarga directa (PC u otros navegadores)
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    setLastBackup(); renderBackupInfo(); toast("Respaldo descargado ✓");
+  }
+  function importData(file){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      let d;
+      try{ d=JSON.parse(e.target.result); }catch(err){ toast("Archivo inválido"); return; }
+      if(!d || typeof d!=="object" || !("presupuesto" in d) && !("gastos" in d) && !("servicios" in d)){
+        toast("No parece un respaldo de Megan"); return;
+      }
+      if(!confirm("Esto reemplazará tus datos actuales con los del respaldo. ¿Continuar?")) return;
+      try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(err){ toast("No se pudo importar 😕"); return; }
+      location.reload();
+    };
+    reader.readAsText(file);
+  }
+  $("#btnExport").onclick=exportData;
+  $("#btnImport").onclick=()=>$("#importFile").click();
+  $("#importFile").addEventListener("change",e=>{ const f=e.target.files&&e.target.files[0]; if(f) importData(f); e.target.value=""; });
+
   // iPhone: teclado / barra inferior
   let kbBlurTimer;
   document.addEventListener("focusin",e=>{
@@ -972,6 +1031,7 @@
   applyTheme();
   renderAll();
   renderCatColors();
+  renderBackupInfo();
   save();   // normaliza el almacenamiento (migra el formato antiguo y limpia campos obsoletos)
 
 })();
