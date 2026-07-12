@@ -230,6 +230,11 @@
   .mkt .price{font-size:16px;font-weight:800}
   .mkt .price input{border:0;background:transparent;color:var(--text);width:100%;text-align:center;font-size:16px;font-weight:800;padding:2px 0}
   .mkt .price input:focus{outline:0}
+  .mkt-search{
+    display:block;margin-top:7px;font-size:10.5px;font-weight:700;text-decoration:none;
+    color:var(--muted);background:var(--surface-2);border-radius:8px;padding:4px 2px;transition:.15s;
+  }
+  .mkt-search:hover{color:#fff;background:var(--brand)}
   .mkt.best{border-color:var(--green);background:var(--green-soft)}
   .mkt.best::after{content:'★ Más barato';position:absolute;top:-9px;left:50%;transform:translateX(-50%);
     background:var(--green);color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:20px;white-space:nowrap}
@@ -408,7 +413,7 @@
   <!-- ============ COMPARADOR ============ -->
   <section class="view" id="v-comparador">
     <h2 class="title">Comparador de precios</h2>
-    <p class="subtitle">Jumbo · Unimarc · Líder. Anota precios y Megan te dice dónde conviene.</p>
+    <p class="subtitle">Agrega un producto y toca <b>🔍 ver precio</b> en cada supermercado: se abre su web, miras el precio real y lo anotas. Megan marca el más barato.</p>
     <div class="card">
       <div class="card-h"><span class="em">🔎</span><h3>Agregar producto</h3></div>
       <div class="form-row">
@@ -751,6 +756,14 @@
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   }
+  // Búsqueda del producto en la web de cada supermercado (se abre en pestaña nueva)
+  function searchUrl(mkt, term){
+    const t = encodeURIComponent(String(term||"").trim());
+    if(mkt==="jumbo")   return "https://www.jumbo.cl/busqueda?ft="+t;
+    if(mkt==="unimarc") return "https://www.unimarc.cl/search?q="+t;
+    if(mkt==="lider")   return "https://www.lider.cl/supermercado/search?query="+t;
+    return "#";
+  }
 
   // ---- Comparador ----
   function renderComparador(){
@@ -772,6 +785,7 @@
           <div class="mname">${names[x.k]}</div>
           <div class="price">$<input type="number" inputmode="numeric" data-id="${p.id}" data-mkt="${x.k}"
                value="${x.v>0?x.v:''}" placeholder="0"></div>
+          <a class="mkt-search" href="${searchUrl(x.k, p.name)}" target="_blank" rel="noopener noreferrer">🔍 ver precio</a>
         </div>`;
       }).join("");
       const saveLine = (withV.length>1 && max>min)
