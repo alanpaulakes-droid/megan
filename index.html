@@ -223,6 +223,17 @@
   .empty .em{font-size:34px;display:block;margin-bottom:8px;opacity:.6}
   .empty .t{font-size:14px}
 
+  /* ---------- Categorías ---------- */
+  .cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .cat-chips:empty{display:none}
+  .cat-chip{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:20px;padding:6px 6px 6px 13px;font-size:13px;font-weight:600}
+  .cat-chip .cchip-del{width:22px;height:22px;border-radius:50%;border:0;background:transparent;color:var(--muted);font-size:15px;display:grid;place-items:center;flex-shrink:0}
+  .cat-chip .cchip-del:hover{background:var(--red-soft);color:var(--red)}
+  .cat-add{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+  .cat-colors{display:flex;flex-wrap:wrap;gap:9px}
+  .swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.15s;box-shadow:0 0 0 1px var(--border)}
+  .swatch.sel{border-color:var(--surface);box-shadow:0 0 0 2px var(--text);transform:scale(1.12)}
+
   .bd-row{margin-bottom:13px}
   .bd-row .top{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
   .bd-row .top .nm{font-weight:600}
@@ -360,32 +371,30 @@
     <h2 class="title">Gastos</h2>
     <p class="subtitle">Supermercado, negocios y feria. Cada monto se descuenta de tu presupuesto del mes.</p>
 
-    <div class="kpis">
-      <div class="kpi accent" id="gDispKpi">
-        <div class="lbl">✅ Disponible este mes</div>
-        <div class="val money" id="gDisponible">$0</div>
-        <div class="foot" id="gDispFoot"></div>
-      </div>
-      <div class="kpi"><div class="lbl">🛒 Supermercado</div><div class="val money" id="gSuper">$0</div></div>
-      <div class="kpi"><div class="lbl">🏪 Negocios</div><div class="val money" id="gNegocio">$0</div></div>
-      <div class="kpi"><div class="lbl">🥬 Feria</div><div class="val money" id="gFeria">$0</div></div>
-    </div>
+    <div class="kpis" id="gKpis"></div>
 
     <div class="card">
       <div class="card-h"><span class="em">➕</span><h3>Registrar gasto</h3></div>
       <div class="form-row">
         <div class="field"><label>Categoría</label>
-          <select class="inp" id="gCat">
-            <option value="super">🛒 Supermercado</option>
-            <option value="negocio">🏪 Negocio</option>
-            <option value="feria">🥬 Feria</option>
-          </select>
+          <select class="inp" id="gCat"></select>
         </div>
         <div class="field"><label>Fecha</label><input class="inp" type="date" id="gFecha"></div>
         <div class="field grow"><label>Detalle</label><input class="inp" id="gDetalle" placeholder="Ej: Jumbo semanal"></div>
         <div class="field"><label>Monto</label><input class="inp" type="number" inputmode="numeric" id="gMonto" placeholder="0"></div>
       </div>
       <button class="btn full" id="gAdd" style="margin-top:6px">➕ Agregar gasto</button>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="em">🏷️</span><h3>Categorías</h3></div>
+      <div class="cat-chips" id="catChips"></div>
+      <div class="cat-add">
+        <input class="inp" id="catEmoji" maxlength="2" placeholder="🏷️" style="width:56px;text-align:center;flex:0 0 auto;padding-left:6px;padding-right:6px">
+        <input class="inp" id="catName" placeholder="Nueva categoría" style="flex:1;min-width:0">
+        <button class="btn sm" id="catAdd">Agregar</button>
+      </div>
+      <div class="cat-colors" id="catColors"></div>
     </div>
 
     <div class="card">
@@ -462,11 +471,12 @@
     {k:"internet", name:"Internet",       em:"🌐"},
     {k:"cuota",    name:"Cuota población",em:"🏘️"}
   ];
-  const CATS = {
-    super:  {name:"Supermercado", em:"🛒", pill:"super"},
-    negocio:{name:"Negocio",      em:"🏪", pill:"negocio"},
-    feria:  {name:"Feria",        em:"🥬", pill:"feria"}
-  };
+  const CAT_COLORS = ["#6c5ce7","#f59f00","#12b886","#4dabf7","#f0506e","#e8590c","#ae3ec9","#1098ad","#fa5252","#37b24d"];
+  const DEFAULT_CATS = [
+    {id:"super",  name:"Supermercado", em:"🛒", color:"#6c5ce7"},
+    {id:"negocio",name:"Negocio",      em:"🏪", color:"#f59f00"},
+    {id:"feria",  name:"Feria",        em:"🥬", color:"#12b886"}
+  ];
   const now = new Date();
 
   // ---------- State ----------
@@ -478,6 +488,7 @@
       presupuesto: 400000,   // presupuesto MENSUAL: todo se descuenta de aquí
       servicios: {},         // year -> [12] -> {luz,agua,gas,internet,cuota}
       gastos: [],            // {id,cat,fecha,detalle,monto}
+      categorias: DEFAULT_CATS.map(c=>({...c})),  // categorías de gasto (editables)
       comparador: []         // {id,name,jumbo,unimarc,lider}
     };
   }
@@ -497,6 +508,14 @@
         (d.otros||[]).forEach(x=> s.gastos.push({id:x.id||uid(),cat:(x.tipo==="feria"?"feria":"negocio"),fecha:x.fecha,detalle:x.detalle,monto:x.monto}));
       }
       if(s.currentMonth==null) s.currentMonth = now.getMonth();
+      // categorías: asegurar que existan (usuarios previos al cambio)
+      if(!Array.isArray(s.categorias) || !s.categorias.length){ s.categorias = DEFAULT_CATS.map(c=>({...c})); }
+      s.categorias = s.categorias.map((c,i)=>({
+        id: c.id || ("c"+i),
+        name: c.name || "Categoría",
+        em: c.em || "🏷️",
+        color: c.color || CAT_COLORS[i % CAT_COLORS.length]
+      }));
       // limpiar campos viejos
       delete s.presupuestoSuper; delete s.supermercado; delete s.otros;
       return s;
@@ -540,6 +559,9 @@
     return "#";
   }
 
+  function getCat(id){ return S.categorias.find(c=>c.id===id) || {id:id,name:"Otro",em:"🏷️",color:"#8a8fa3"}; }
+  function catPill(c){ return `<span class="pill" style="background:${c.color}22;color:${c.color}">${escapeHtml(c.name)}</span>`; }
+
   function ensureServYear(y){
     if(!S.servicios[y]) S.servicios[y] = Array.from({length:12},()=>({luz:0,agua:0,gas:0,internet:0,cuota:0}));
     for(let m=0;m<12;m++){
@@ -575,10 +597,7 @@
     const y=S.currentYear, m=S.currentMonth;
     const budget=num(S.presupuesto);
     const serv=servMonthTotal(y,m);
-    const superT=gastosMonth(y,m,"super");
-    const neg=gastosMonth(y,m,"negocio");
-    const fer=gastosMonth(y,m,"feria");
-    const spent=serv+superT+neg+fer;
+    const spent=serv+gastosMonth(y,m);
     const left=budget-spent;
     const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
 
@@ -594,19 +613,15 @@
     $("#budgetInput").placeholder="Actual: "+budget;
 
     // Breakdown (share of spending)
-    const parts=[
-      {name:"Servicios",v:serv,c:"var(--blue)",em:"🧾"},
-      {name:"Supermercado",v:superT,c:"var(--brand)",em:"🛒"},
-      {name:"Negocios",v:neg,c:"var(--amber)",em:"🏪"},
-      {name:"Feria",v:fer,c:"var(--green)",em:"🥬"}
-    ];
+    const parts=[{name:"Servicios",v:serv,c:"var(--blue)",em:"🧾"}]
+      .concat(S.categorias.map(cat=>({name:cat.name,v:gastosMonth(y,m,cat.id),c:cat.color,em:cat.em})));
     if(spent===0){
       $("#mesBreakdown").innerHTML=emptyBlock("📭","Aún no hay gastos en "+MONTHS[m]+". Registra tus servicios o gastos y verás cómo se descuentan.");
     }else{
       $("#mesBreakdown").innerHTML=parts.map(p=>{
         const share=spent?Math.round(p.v/spent*100):0;
         return `<div class="bd-row">
-          <div class="top"><span class="nm">${p.em} ${p.name}</span><span class="vl money">${fmt(p.v)} · ${share}%</span></div>
+          <div class="top"><span class="nm">${p.em} ${escapeHtml(p.name)}</span><span class="vl money">${fmt(p.v)} · ${share}%</span></div>
           <div class="bd-bar"><div style="width:${share}%;background:${p.c}"></div></div>
         </div>`;
       }).join("");
@@ -634,11 +649,11 @@
     </div>`;
   }
   function gastoRow(x){
-    const c=CATS[x.cat]||CATS.super;
+    const c=getCat(x.cat);
     return `<div class="item">
       <div class="ic">${c.em}</div>
       <div class="meta">
-        <div class="t"><span class="txt">${escapeHtml(x.detalle||"(sin detalle)")}</span><span class="pill ${c.pill}">${c.name}</span></div>
+        <div class="t"><span class="txt">${escapeHtml(x.detalle||"(sin detalle)")}</span>${catPill(c)}</div>
         <div class="d">${x.fecha?fechaLbl(x.fecha):""}</div>
       </div>
       <div class="amt money">-${fmt(x.monto)}</div>
@@ -704,13 +719,20 @@
     const y=S.currentYear, m=S.currentMonth;
     $("#gMesNombre").textContent = MONTHS[m]+" "+y;
     const disp=disponibleMes(y,m);
-    const dk=$("#gDispKpi"), dv=$("#gDisponible");
-    dv.textContent=fmt(disp);
-    if(disp<0){ dk.classList.remove("accent"); dk.classList.add("danger"); $("#gDispFoot").textContent="Sobrepasaste el presupuesto"; }
-    else{ dk.classList.remove("danger"); dk.classList.add("accent"); $("#gDispFoot").textContent="de "+fmt(num(S.presupuesto)); }
-    $("#gSuper").textContent=fmt(gastosMonth(y,m,"super"));
-    $("#gNegocio").textContent=fmt(gastosMonth(y,m,"negocio"));
-    $("#gFeria").textContent=fmt(gastosMonth(y,m,"feria"));
+
+    // KPIs: disponible + una por cada categoría
+    let kpis=`<div class="kpi ${disp<0?'danger':'accent'}">
+        <div class="lbl">✅ Disponible este mes</div>
+        <div class="val money">${fmt(disp)}</div>
+        <div class="foot">${disp<0?'Sobrepasaste el presupuesto':'de '+fmt(num(S.presupuesto))}</div>
+      </div>`;
+    S.categorias.forEach(cat=>{
+      kpis+=`<div class="kpi"><div class="lbl">${cat.em} ${escapeHtml(cat.name)}</div><div class="val money">${fmt(gastosMonth(y,m,cat.id))}</div></div>`;
+    });
+    $("#gKpis").innerHTML=kpis;
+
+    renderCatSelect();
+    renderCatChips();
 
     const items=S.gastos.filter(x=>yearOf(x.fecha)===y && monthOf(x.fecha)===m)
                         .sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
@@ -723,6 +745,34 @@
         save(); renderAll(); toast("Gasto eliminado");
       }));
     }
+  }
+
+  function renderCatSelect(){
+    const sel=$("#gCat"); const cur=sel.value;
+    sel.innerHTML=S.categorias.map(c=>`<option value="${c.id}">${c.em} ${escapeHtml(c.name)}</option>`).join("");
+    if(cur && S.categorias.some(c=>c.id===cur)) sel.value=cur;
+  }
+  function renderCatChips(){
+    const box=$("#catChips");
+    box.innerHTML=S.categorias.map(c=>{
+      const count=S.gastos.filter(g=>g.cat===c.id).length;
+      return `<span class="cat-chip" style="border-color:${c.color}66">
+        <span>${c.em} ${escapeHtml(c.name)}</span>
+        <button class="cchip-del" data-delcat="${c.id}" title="${count?'Tiene gastos, no se puede borrar':'Eliminar'}">×</button>
+      </span>`;
+    }).join("");
+    box.querySelectorAll("[data-delcat]").forEach(b=> b.addEventListener("click",()=>deleteCat(b.dataset.delcat)));
+  }
+  function deleteCat(id){
+    if(S.categorias.length<=1){ toast("Debe quedar al menos una categoría"); return; }
+    const count=S.gastos.filter(g=>g.cat===id).length;
+    if(count>0){ toast("No se puede: tiene "+count+" gasto(s)"); return; }
+    S.categorias=S.categorias.filter(c=>c.id!==id); save(); renderAll(); toast("Categoría eliminada");
+  }
+  function renderCatColors(){
+    const box=$("#catColors");
+    box.innerHTML=CAT_COLORS.map(col=>`<button class="swatch ${col===selectedCatColor?'sel':''}" data-col="${col}" style="background:${col}" aria-label="color"></button>`).join("");
+    box.querySelectorAll("[data-col]").forEach(b=> b.addEventListener("click",()=>{ selectedCatColor=b.dataset.col; renderCatColors(); }));
   }
 
   // ---- Comparador ----
@@ -811,18 +861,14 @@
     $("#anoBars").innerHTML=`<div style="display:flex;gap:4px;align-items:flex-end">${bars}</div>`;
 
     let servY=0; for(let m=0;m<12;m++) servY+=servMonthTotal(y,m);
-    const parts=[
-      {name:"Servicios",v:servY,c:"var(--blue)",em:"🧾"},
-      {name:"Supermercado",v:gastosYear(y,"super"),c:"var(--brand)",em:"🛒"},
-      {name:"Negocios",v:gastosYear(y,"negocio"),c:"var(--amber)",em:"🏪"},
-      {name:"Feria",v:gastosYear(y,"feria"),c:"var(--green)",em:"🥬"}
-    ];
+    const parts=[{name:"Servicios",v:servY,c:"var(--blue)",em:"🧾"}]
+      .concat(S.categorias.map(cat=>({name:cat.name,v:gastosYear(y,cat.id),c:cat.color,em:cat.em})));
     if(spentYear===0){
       $("#anoBreakdown").innerHTML=emptyBlock("📭","Aún no hay gastos este año.");
     }else{
       $("#anoBreakdown").innerHTML=parts.map(p=>{
         const share=spentYear?Math.round(p.v/spentYear*100):0;
-        return `<div class="bd-row"><div class="top"><span class="nm">${p.em} ${p.name}</span><span class="vl money">${fmt(p.v)} · ${share}%</span></div><div class="bd-bar"><div style="width:${share}%;background:${p.c}"></div></div></div>`;
+        return `<div class="bd-row"><div class="top"><span class="nm">${p.em} ${escapeHtml(p.name)}</span><span class="vl money">${fmt(p.v)} · ${share}%</span></div><div class="bd-bar"><div style="width:${share}%;background:${p.c}"></div></div></div>`;
       }).join("");
     }
   }
@@ -871,6 +917,27 @@
     else toast("Gasto registrado ✓");
   };
 
+  // Categorías: agregar nuevas
+  function pickDefaultColor(){
+    const used=new Set(S.categorias.map(c=>c.color));
+    return CAT_COLORS.find(c=>!used.has(c)) || CAT_COLORS[0];
+  }
+  let selectedCatColor = pickDefaultColor();
+  $("#catAdd").onclick=()=>{
+    const name=$("#catName").value.trim();
+    if(!name){ toast("Escribe un nombre para la categoría"); return; }
+    const em=$("#catEmoji").value.trim()||"🏷️";
+    const id="c"+uid();
+    S.categorias.push({id,name,em,color:selectedCatColor});
+    save();
+    $("#catName").value=""; $("#catEmoji").value="";
+    renderAll();
+    selectedCatColor=pickDefaultColor(); renderCatColors();
+    $("#gCat").value=id;
+    toast("Categoría agregada ✓");
+  };
+  $("#catName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#catAdd").click(); });
+
   // Comparador add
   $("#cpAdd").onclick=()=>{
     const name=$("#cpName").value.trim();
@@ -904,6 +971,7 @@
   $("#gFecha").value=todayISO();
   applyTheme();
   renderAll();
+  renderCatColors();
   save();   // normaliza el almacenamiento (migra el formato antiguo y limpia campos obsoletos)
 
 })();
