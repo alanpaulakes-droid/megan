@@ -1,0 +1,911 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Megan · Presupuesto del Hogar</title>
+<!-- iPhone: comportamiento de app instalada -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Megan">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6c5ce7">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%236c5ce7'/%3E%3Ctext x='90' y='128' font-size='110' font-family='Arial,sans-serif' font-weight='bold' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f6f7fb;
+    --surface:#ffffff;
+    --surface-2:#f0f1f7;
+    --border:#e6e8f0;
+    --text:#1a1c2e;
+    --muted:#8a8fa3;
+    --brand:#6c5ce7;
+    --brand-soft:#efecff;
+    --green:#12b886;
+    --green-soft:#e6f9f2;
+    --red:#f0506e;
+    --red-soft:#fdeaee;
+    --amber:#f59f00;
+    --amber-soft:#fff7e6;
+    --blue:#4dabf7;
+    --shadow:0 1px 3px rgba(20,22,45,.06),0 8px 24px rgba(20,22,45,.05);
+    --radius:18px;
+    --radius-sm:12px;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1015;
+    --surface:#191a22;
+    --surface-2:#22232e;
+    --border:#2c2e3c;
+    --text:#eceef5;
+    --muted:#8a8fa3;
+    --brand:#8f7bff;
+    --brand-soft:#26243d;
+    --green:#20c997;
+    --green-soft:#123a30;
+    --red:#ff6b81;
+    --red-soft:#3a1c24;
+    --amber:#ffc94d;
+    --amber-soft:#3a2f14;
+    --blue:#6cb8ff;
+    --shadow:0 1px 3px rgba(0,0,0,.3),0 12px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    padding-bottom:90px;
+  }
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:color-mix(in srgb,var(--bg) 82%,transparent);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+  }
+  .head-inner{
+    max-width:960px;margin:0 auto;padding:16px 20px;
+    display:flex;align-items:center;gap:14px;
+  }
+  .logo{
+    width:42px;height:42px;border-radius:13px;
+    background:linear-gradient(135deg,var(--brand),#a29bfe);
+    display:grid;place-items:center;color:#fff;font-weight:800;font-size:20px;
+    box-shadow:0 6px 16px rgba(108,92,231,.35);
+    flex-shrink:0;
+  }
+  .brand-name{font-size:20px;font-weight:800;letter-spacing:-.02em}
+  .brand-sub{font-size:12px;color:var(--muted);font-weight:500}
+  .head-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .year-pick{
+    display:flex;align-items:center;gap:2px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:11px;padding:3px;box-shadow:var(--shadow);
+  }
+  .year-pick button{
+    border:0;background:transparent;color:var(--muted);
+    width:28px;height:28px;border-radius:8px;font-size:16px;display:grid;place-items:center;
+  }
+  .year-pick button:hover{background:var(--surface-2);color:var(--text)}
+  .year-pick .yr{font-weight:700;min-width:52px;text-align:center;font-size:15px}
+  .icon-btn{
+    width:38px;height:38px;border-radius:11px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-size:17px;display:grid;place-items:center;
+    box-shadow:var(--shadow);
+  }
+  .icon-btn:hover{background:var(--surface-2)}
+
+  /* ---------- Layout ---------- */
+  main{max-width:960px;margin:0 auto;padding:20px}
+  .view{display:none;animation:fade .35s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h2.title{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:2px}
+  .subtitle{color:var(--muted);font-size:13.5px;margin-bottom:20px}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px;
+  }
+  .card-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .card-h h3{font-size:16px;font-weight:700}
+  .card-h .em{font-size:18px}
+
+  /* ---------- KPI grid ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:16px;box-shadow:var(--shadow);
+  }
+  .kpi .lbl{font-size:12px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:23px;font-weight:800;margin-top:6px;letter-spacing:-.02em}
+  .kpi .foot{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .kpi.accent{background:linear-gradient(135deg,var(--brand),#a29bfe);border:0;color:#fff}
+  .kpi.accent .lbl,.kpi.accent .foot{color:rgba(255,255,255,.85)}
+
+  /* ---------- Services table ---------- */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;min-width:560px}
+  th,td{text-align:right;padding:10px 8px;font-size:14px;border-bottom:1px solid var(--border)}
+  th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+  thead th{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+  tbody tr:hover td{background:var(--surface-2)}
+  tbody tr:hover td:first-child{background:var(--surface-2)}
+  td.month{font-weight:600}
+  tr.now td{background:var(--brand-soft)!important}
+  tr.now td:first-child{color:var(--brand);font-weight:700}
+  tfoot td{font-weight:800;border-top:2px solid var(--border);border-bottom:0;font-size:14.5px}
+  tfoot td:first-child{color:var(--muted);text-transform:uppercase;font-size:11.5px;letter-spacing:.03em}
+  .cell-input{
+    width:100%;min-width:74px;border:1px solid transparent;background:transparent;
+    border-radius:8px;padding:6px 8px;text-align:right;font-size:14px;color:var(--text);
+    transition:.15s;
+  }
+  .cell-input:hover{background:var(--surface-2)}
+  .cell-input:focus{outline:0;border-color:var(--brand);background:var(--surface)}
+  .cell-input::placeholder{color:var(--muted);opacity:.5}
+
+  /* ---------- Budget ring ---------- */
+  .budget-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .ring{position:relative;width:132px;height:132px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .center{
+    position:absolute;inset:0;display:grid;place-content:center;text-align:center;
+  }
+  .ring .pct{font-size:24px;font-weight:800;letter-spacing:-.02em}
+  .ring .pct-l{font-size:11px;color:var(--muted);font-weight:600}
+  .budget-info{flex:1;min-width:200px}
+  .budget-line{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;border-bottom:1px dashed var(--border)}
+  .budget-line:last-child{border:0}
+  .budget-line b{font-weight:700}
+  .b-editor{display:flex;align-items:center;gap:8px;margin-top:4px}
+
+  /* ---------- Forms & rows ---------- */
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+  .field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px}
+  .field.grow{flex:2}
+  .field label{font-size:12px;font-weight:600;color:var(--muted)}
+  .inp{
+    border:1px solid var(--border);background:var(--bg);color:var(--text);
+    border-radius:11px;padding:11px 13px;font-size:14px;width:100%;transition:.15s;
+  }
+  .inp:focus{outline:0;border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
+  select.inp{cursor:pointer}
+  .btn{
+    border:0;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;
+    background:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(108,92,231,.3);
+    display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:.15s;
+  }
+  .btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .btn:active{transform:none}
+  .btn.ghost{background:var(--surface-2);color:var(--text);box-shadow:none}
+  .btn.sm{padding:8px 12px;font-size:13px}
+
+  .list{display:flex;flex-direction:column;gap:8px}
+  .item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;
+    background:var(--surface-2);border-radius:var(--radius-sm);
+  }
+  .item .ic{
+    width:38px;height:38px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:17px;
+    background:var(--surface);
+  }
+  .item .meta{flex:1;min-width:0}
+  .item .meta .t{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .meta .d{font-size:12px;color:var(--muted)}
+  .item .amt{font-weight:800;font-size:15px;white-space:nowrap}
+  .item .del{
+    width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:var(--muted);
+    font-size:16px;display:grid;place-items:center;flex-shrink:0;
+  }
+  .item .del:hover{background:var(--red-soft);color:var(--red)}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block}
+  .pill.feria{background:var(--green-soft);color:var(--green)}
+  .pill.negocio{background:var(--amber-soft);color:var(--amber)}
+  .pill.super{background:var(--brand-soft);color:var(--brand)}
+
+  .empty{text-align:center;padding:34px 20px;color:var(--muted)}
+  .empty .em{font-size:34px;display:block;margin-bottom:8px;opacity:.6}
+  .empty .t{font-size:14px}
+
+  /* ---------- Comparator ---------- */
+  .cmp{border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;background:var(--surface-2)}
+  .cmp-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cmp-h .name{font-weight:700;font-size:15px}
+  .cmp-prices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .mkt{
+    border:1.5px solid var(--border);border-radius:11px;padding:10px;text-align:center;background:var(--surface);
+    position:relative;transition:.15s;
+  }
+  .mkt .mname{font-size:11px;font-weight:800;letter-spacing:.02em;margin-bottom:4px;text-transform:uppercase}
+  .mkt.jumbo .mname{color:#0aa14b}
+  .mkt.unimarc .mname{color:#e8321e}
+  .mkt.lider .mname{color:#0b5cab}
+  .mkt .price{font-size:16px;font-weight:800}
+  .mkt .price input{border:0;background:transparent;color:var(--text);width:100%;text-align:center;font-size:16px;font-weight:800;padding:2px 0}
+  .mkt .price input:focus{outline:0}
+  .mkt.best{border-color:var(--green);background:var(--green-soft)}
+  .mkt.best::after{content:'★ Más barato';position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+    background:var(--green);color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:20px;white-space:nowrap}
+  .cmp-save{font-size:12px;color:var(--green);font-weight:700;margin-top:10px;text-align:center}
+
+  /* ---------- Bottom nav ---------- */
+  nav.tabs{
+    position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;
+    display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);
+    border-radius:20px;padding:6px;box-shadow:0 10px 30px rgba(20,22,45,.15);
+    max-width:calc(100% - 24px);
+  }
+  nav.tabs button{
+    border:0;background:transparent;color:var(--muted);
+    padding:9px 14px;border-radius:14px;font-size:11px;font-weight:600;
+    display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;transition:.15s;
+  }
+  nav.tabs button .ic{font-size:19px}
+  nav.tabs button.active{background:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(108,92,231,.35)}
+
+  .money{font-variant-numeric:tabular-nums}
+  .toast{
+    position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--text);color:var(--bg);padding:11px 20px;border-radius:14px;font-size:13.5px;font-weight:600;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.3s;z-index:100;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:560px){
+    .head-inner{padding:12px 16px}
+    main{padding:16px 14px}
+    .brand-sub{display:none}
+    .cmp-prices{grid-template-columns:1fr 1fr 1fr;gap:6px}
+    .mkt{padding:8px 6px}
+    nav.tabs button{padding:8px 9px;min-width:54px}
+  }
+</style>
+
+<header>
+  <div class="head-inner">
+    <div class="logo">M</div>
+    <div>
+      <div class="brand-name">Megan</div>
+      <div class="brand-sub">Presupuesto del hogar</div>
+    </div>
+    <div class="head-actions">
+      <div class="year-pick">
+        <button id="yPrev" title="Año anterior">‹</button>
+        <span class="yr" id="yLabel">2026</span>
+        <button id="yNext" title="Año siguiente">›</button>
+      </div>
+      <button class="icon-btn" id="themeBtn" title="Tema claro/oscuro">◐</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ RESUMEN ============ -->
+  <section class="view active" id="v-resumen">
+    <h2 class="title">Resumen <span id="resYear"></span></h2>
+    <p class="subtitle">Todo tu año de un vistazo.</p>
+    <div class="kpis">
+      <div class="kpi accent">
+        <div class="lbl">💸 Gasto total del año</div>
+        <div class="val money" id="rTotalYear">$0</div>
+        <div class="foot" id="rTotalYearFoot">Servicios + compras</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">🧾 Servicios del año</div>
+        <div class="val money" id="rServ">$0</div>
+        <div class="foot">Luz, agua, gas, internet, cuota</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">🛒 Compras del año</div>
+        <div class="val money" id="rComp">$0</div>
+        <div class="foot">Super + negocios + feria</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">📅 Este mes (<span id="rMonthName"></span>)</div>
+        <div class="val money" id="rMonth">$0</div>
+        <div class="foot" id="rMonthFoot">Gasto total del mes</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="em">📊</span><h3>Gasto por mes</h3></div>
+      <div id="monthBars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="em">🧩</span><h3>Distribución del gasto anual</h3></div>
+      <div id="breakdown"></div>
+    </div>
+  </section>
+
+  <!-- ============ SERVICIOS ============ -->
+  <section class="view" id="v-servicios">
+    <h2 class="title">Cuentas y servicios</h2>
+    <p class="subtitle">Registra mes a mes lo que pagas. Se guarda solo. Toca una celda para editar.</p>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table id="servTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SUPERMERCADO ============ -->
+  <section class="view" id="v-super">
+    <h2 class="title">Supermercado</h2>
+    <p class="subtitle" id="superSub">Presupuesto mensual y compras.</p>
+
+    <div class="card">
+      <div class="card-h"><span class="em">🎯</span><h3>Presupuesto de <span id="superMonthName"></span></h3></div>
+      <div class="budget-row">
+        <div class="ring">
+          <svg width="132" height="132" viewBox="0 0 132 132">
+            <circle cx="66" cy="66" r="56" fill="none" stroke="var(--surface-2)" stroke-width="14"/>
+            <circle id="ringFg" cx="66" cy="66" r="56" fill="none" stroke="var(--brand)" stroke-width="14"
+                    stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9"/>
+          </svg>
+          <div class="center">
+            <div class="pct" id="ringPct">0%</div>
+            <div class="pct-l">usado</div>
+          </div>
+        </div>
+        <div class="budget-info">
+          <div class="budget-line"><span>Presupuesto</span><b class="money" id="bBudget">$400.000</b></div>
+          <div class="budget-line"><span>Gastado</span><b class="money" id="bSpent">$0</b></div>
+          <div class="budget-line"><span>Disponible</span><b class="money" id="bLeft" style="color:var(--green)">$400.000</b></div>
+          <div class="b-editor">
+            <input class="inp" type="number" id="budgetInput" placeholder="Editar presupuesto" style="flex:1">
+            <button class="btn sm" id="saveBudget">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="em">➕</span><h3>Registrar compra de supermercado</h3></div>
+      <div class="form-row">
+        <div class="field"><label>Fecha</label><input class="inp" type="date" id="spFecha"></div>
+        <div class="field grow"><label>Detalle / lugar</label><input class="inp" id="spDetalle" placeholder="Ej: Jumbo semanal"></div>
+        <div class="field"><label>Monto</label><input class="inp" type="number" id="spMonto" placeholder="0"></div>
+        <button class="btn" id="spAdd">Agregar</button>
+      </div>
+      <div class="list" id="superList"></div>
+    </div>
+  </section>
+
+  <!-- ============ NEGOCIOS Y FERIA ============ -->
+  <section class="view" id="v-otros">
+    <h2 class="title">Negocios y feria</h2>
+    <p class="subtitle">Compras en negocios de barrio y en la feria.</p>
+    <div class="card">
+      <div class="card-h"><span class="em">➕</span><h3>Registrar compra</h3></div>
+      <div class="form-row">
+        <div class="field"><label>Tipo</label>
+          <select class="inp" id="ofTipo"><option value="negocio">Negocio</option><option value="feria">Feria</option></select>
+        </div>
+        <div class="field"><label>Fecha</label><input class="inp" type="date" id="ofFecha"></div>
+        <div class="field grow"><label>Detalle</label><input class="inp" id="ofDetalle" placeholder="Ej: Verduras de la semana"></div>
+        <div class="field"><label>Monto</label><input class="inp" type="number" id="ofMonto" placeholder="0"></div>
+        <button class="btn" id="ofAdd">Agregar</button>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">🏪 Negocios (mes)</div><div class="val money" id="totNegocio">$0</div></div>
+      <div class="kpi"><div class="lbl">🥬 Feria (mes)</div><div class="val money" id="totFeria">$0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><span class="em">📋</span><h3>Movimientos de <span id="otrosMonthName"></span></h3></div>
+      <div class="list" id="otrosList"></div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARADOR ============ -->
+  <section class="view" id="v-comparador">
+    <h2 class="title">Comparador de precios</h2>
+    <p class="subtitle">Jumbo · Unimarc · Líder. Anota precios y Megan te dice dónde conviene.</p>
+    <div class="card">
+      <div class="card-h"><span class="em">🔎</span><h3>Agregar producto</h3></div>
+      <div class="form-row">
+        <div class="field grow"><label>Producto</label><input class="inp" id="cpName" placeholder="Ej: Arroz 1kg"></div>
+        <div class="field"><label>Jumbo $</label><input class="inp" type="number" id="cpJumbo" placeholder="0"></div>
+        <div class="field"><label>Unimarc $</label><input class="inp" type="number" id="cpUni" placeholder="0"></div>
+        <div class="field"><label>Líder $</label><input class="inp" type="number" id="cpLider" placeholder="0"></div>
+        <button class="btn" id="cpAdd">Agregar</button>
+      </div>
+    </div>
+    <div class="card" id="cmpSummaryCard" style="display:none">
+      <div class="card-h"><span class="em">🏆</span><h3>Canasta más barata</h3></div>
+      <div class="kpis" id="cmpSummary"></div>
+    </div>
+    <div id="cmpList"></div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-view="resumen" class="active"><span class="ic">🏠</span>Resumen</button>
+  <button data-view="servicios"><span class="ic">🧾</span>Servicios</button>
+  <button data-view="super"><span class="ic">🛒</span>Super</button>
+  <button data-view="otros"><span class="ic">🥬</span>Feria</button>
+  <button data-view="comparador"><span class="ic">🔎</span>Precios</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const KEY = "megan_data_v1";
+  const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const SERVICES = [
+    {k:"luz",      name:"Luz",            em:"💡"},
+    {k:"agua",     name:"Agua",           em:"💧"},
+    {k:"gas",      name:"Gas",            em:"🔥"},
+    {k:"internet", name:"Internet",       em:"🌐"},
+    {k:"cuota",    name:"Cuota población",em:"🏘️"}
+  ];
+  const now = new Date();
+
+  // ---------- State ----------
+  function defaultState(){
+    return {
+      currentYear: now.getFullYear(),
+      theme: "light",
+      presupuestoSuper: 400000,   // por mes
+      servicios: {},              // year -> [12] -> {luz,agua,gas,internet,cuota}
+      supermercado: [],           // {id,fecha,detalle,monto}
+      otros: [],                  // {id,tipo,fecha,detalle,monto}
+      comparador: []              // {id,name,jumbo,unimarc,lider}
+    };
+  }
+  let S = load();
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      const d = JSON.parse(raw);
+      const def = defaultState();
+      return Object.assign(def, d);
+    }catch(e){ return defaultState(); }
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+    catch(e){ toast("No se pudo guardar 😕"); }
+  }
+
+  // ---------- Helpers ----------
+  const $  = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  function fmt(n){
+    n = Math.round(Number(n)||0);
+    return "$" + n.toLocaleString("es-CL");
+  }
+  function num(v){ const n = Number(v); return isFinite(n)&&n>0 ? n : 0; }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function monthOf(iso){ // 0-11 from yyyy-mm-dd
+    if(!iso) return null;
+    const p = iso.split("-"); return parseInt(p[1],10)-1;
+  }
+  function yearOf(iso){ if(!iso) return null; return parseInt(iso.split("-")[0],10); }
+  let toastT;
+  function toast(msg){
+    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"),1900);
+  }
+
+  function ensureServYear(y){
+    if(!S.servicios[y]){
+      S.servicios[y] = Array.from({length:12},()=>({luz:0,agua:0,gas:0,internet:0,cuota:0}));
+    }
+    // safety for older/partial data
+    for(let m=0;m<12;m++){
+      if(!S.servicios[y][m]) S.servicios[y][m]={luz:0,agua:0,gas:0,internet:0,cuota:0};
+      SERVICES.forEach(s=>{ if(S.servicios[y][m][s.k]==null) S.servicios[y][m][s.k]=0; });
+    }
+  }
+
+  // ---------- Aggregations ----------
+  function servMonthTotal(y,m){
+    ensureServYear(y);
+    return SERVICES.reduce((a,s)=>a+num(S.servicios[y][m][s.k]),0);
+  }
+  function servYearTotal(y){
+    let t=0; for(let m=0;m<12;m++) t+=servMonthTotal(y,m); return t;
+  }
+  function superMonth(y,m){
+    return S.supermercado.filter(x=>yearOf(x.fecha)===y && monthOf(x.fecha)===m)
+                         .reduce((a,x)=>a+num(x.monto),0);
+  }
+  function superYear(y){
+    return S.supermercado.filter(x=>yearOf(x.fecha)===y).reduce((a,x)=>a+num(x.monto),0);
+  }
+  function otrosMonth(y,m,tipo){
+    return S.otros.filter(x=>yearOf(x.fecha)===y && monthOf(x.fecha)===m && (!tipo||x.tipo===tipo))
+                  .reduce((a,x)=>a+num(x.monto),0);
+  }
+  function otrosYear(y,tipo){
+    return S.otros.filter(x=>yearOf(x.fecha)===y && (!tipo||x.tipo===tipo))
+                  .reduce((a,x)=>a+num(x.monto),0);
+  }
+  function comprasMonth(y,m){ return superMonth(y,m)+otrosMonth(y,m); }
+  function comprasYear(y){ return superYear(y)+otrosYear(y); }
+
+  // ================= RENDER =================
+  function renderAll(){
+    const y = S.currentYear;
+    $("#yLabel").textContent = y;
+    $("#resYear").textContent = y;
+    renderResumen();
+    renderServicios();
+    renderSuper();
+    renderOtros();
+    renderComparador();
+  }
+
+  // ---- Resumen ----
+  function renderResumen(){
+    const y = S.currentYear;
+    const curM = (y===now.getFullYear()) ? now.getMonth() : 0;
+    const serv = servYearTotal(y);
+    const comp = comprasYear(y);
+    const total = serv+comp;
+    $("#rServ").textContent = fmt(serv);
+    $("#rComp").textContent = fmt(comp);
+    $("#rTotalYear").textContent = fmt(total);
+    $("#rMonthName").textContent = MONTHS[curM];
+    $("#rMonth").textContent = fmt(servMonthTotal(y,curM)+comprasMonth(y,curM));
+
+    // Bars per month
+    const vals = [];
+    for(let m=0;m<12;m++) vals.push(servMonthTotal(y,m)+comprasMonth(y,m));
+    const max = Math.max(1,...vals);
+    const bars = vals.map((v,m)=>{
+      const h = Math.max(3, Math.round(v/max*100));
+      const isNow = (y===now.getFullYear() && m===now.getMonth());
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0">
+        <div style="font-size:9.5px;color:var(--muted);font-weight:600;white-space:nowrap;height:12px">${v>0?fmtShort(v):''}</div>
+        <div style="width:100%;max-width:26px;height:120px;display:flex;align-items:flex-end">
+          <div title="${MONTHS[m]}: ${fmt(v)}" style="width:100%;height:${h}%;border-radius:6px 6px 3px 3px;
+            background:${isNow?'linear-gradient(var(--brand),#a29bfe)':'var(--surface-2)'};
+            border:1px solid ${isNow?'transparent':'var(--border)'};transition:.3s"></div>
+        </div>
+        <div style="font-size:10px;color:${isNow?'var(--brand)':'var(--muted)'};font-weight:${isNow?700:500}">${MONTHS[m].slice(0,3)}</div>
+      </div>`;
+    }).join("");
+    $("#monthBars").innerHTML = `<div style="display:flex;gap:4px;align-items:flex-end">${bars}</div>`;
+
+    // Breakdown
+    const parts = [
+      {name:"Servicios", v:serv, c:"var(--blue)", em:"🧾"},
+      {name:"Supermercado", v:superYear(y), c:"var(--brand)", em:"🛒"},
+      {name:"Negocios", v:otrosYear(y,"negocio"), c:"var(--amber)", em:"🏪"},
+      {name:"Feria", v:otrosYear(y,"feria"), c:"var(--green)", em:"🥬"}
+    ];
+    if(total===0){
+      $("#breakdown").innerHTML = emptyBlock("📭","Aún no hay gastos este año. Empieza registrando tus servicios o compras.");
+    }else{
+      $("#breakdown").innerHTML = parts.map(p=>{
+        const pct = total? Math.round(p.v/total*100):0;
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="font-weight:600">${p.em} ${p.name}</span>
+            <span class="money" style="font-weight:700">${fmt(p.v)} · ${pct}%</span>
+          </div>
+          <div style="height:9px;background:var(--surface-2);border-radius:20px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${p.c};border-radius:20px;transition:.4s"></div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+  }
+  function fmtShort(n){
+    if(n>=1000000) return "$"+(n/1000000).toFixed(1).replace(/\.0$/,'')+"M";
+    if(n>=1000) return "$"+Math.round(n/1000)+"k";
+    return "$"+n;
+  }
+  function emptyBlock(em,t){
+    return `<div class="empty"><span class="em">${em}</span><div class="t">${t}</div></div>`;
+  }
+
+  // ---- Servicios ----
+  function renderServicios(){
+    const y = S.currentYear; ensureServYear(y);
+    let head = `<thead><tr><th>Mes</th>`;
+    SERVICES.forEach(s=> head += `<th>${s.em} ${s.name}</th>`);
+    head += `<th>Total</th></tr></thead>`;
+
+    let body = "<tbody>";
+    for(let m=0;m<12;m++){
+      const isNow = (y===now.getFullYear() && m===now.getMonth());
+      body += `<tr class="${isNow?'now':''}"><td class="month">${MONTHS[m]}</td>`;
+      SERVICES.forEach(s=>{
+        const v = S.servicios[y][m][s.k];
+        body += `<td><input class="cell-input money" type="number" inputmode="numeric"
+                   data-m="${m}" data-k="${s.k}" placeholder="0"
+                   value="${v>0?v:''}"></td>`;
+      });
+      body += `<td class="money" style="font-weight:700" data-total-m="${m}">${fmt(servMonthTotal(y,m))}</td></tr>`;
+    }
+    body += "</tbody>";
+
+    let foot = `<tfoot><tr><td>Total año</td>`;
+    SERVICES.forEach(s=>{
+      let t=0; for(let m=0;m<12;m++) t+=num(S.servicios[y][m][s.k]);
+      foot += `<td class="money" data-foot-k="${s.k}">${fmt(t)}</td>`;
+    });
+    foot += `<td class="money" data-foot-total>${fmt(servYearTotal(y))}</td></tr></tfoot>`;
+
+    $("#servTable").innerHTML = head+body+foot;
+
+    $$("#servTable .cell-input").forEach(inp=>{
+      inp.addEventListener("input", onServiceEdit);
+      inp.addEventListener("focus", e=>e.target.select());
+    });
+  }
+  function onServiceEdit(e){
+    const y = S.currentYear, m = +e.target.dataset.m, k = e.target.dataset.k;
+    ensureServYear(y);
+    S.servicios[y][m][k] = num(e.target.value);
+    save();
+    // update just the affected totals (no full re-render to keep focus)
+    $(`[data-total-m="${m}"]`).textContent = fmt(servMonthTotal(y,m));
+    let colT=0; for(let i=0;i<12;i++) colT+=num(S.servicios[y][i][k]);
+    $(`[data-foot-k="${k}"]`).textContent = fmt(colT);
+    $("[data-foot-total]").textContent = fmt(servYearTotal(y));
+    renderResumen();
+  }
+
+  // ---- Supermercado ----
+  function renderSuper(){
+    const y = S.currentYear, m = (y===now.getFullYear())?now.getMonth():now.getMonth();
+    const mm = now.getMonth(); // budget always tracks the real current month within selected year
+    $("#superMonthName").textContent = MONTHS[mm] + " " + y;
+    const budget = num(S.presupuestoSuper)||0;
+    const spent = superMonth(y,mm);
+    const left = budget - spent;
+    const pct = budget>0 ? Math.min(100,Math.round(spent/budget*100)) : 0;
+
+    $("#bBudget").textContent = fmt(budget);
+    $("#bSpent").textContent = fmt(spent);
+    const bl = $("#bLeft");
+    bl.textContent = fmt(left);
+    bl.style.color = left>=0 ? "var(--green)" : "var(--red)";
+    $("#ringPct").textContent = pct+"%";
+
+    const C = 2*Math.PI*56; // 351.86
+    const ring = $("#ringFg");
+    ring.style.strokeDasharray = C.toFixed(1);
+    ring.style.strokeDashoffset = (C*(1-pct/100)).toFixed(1);
+    ring.style.stroke = left<0 ? "var(--red)" : (pct>=85 ? "var(--amber)" : "var(--brand)");
+    $("#budgetInput").placeholder = "Actual: "+budget;
+
+    // list (this year, newest first)
+    const items = S.supermercado.filter(x=>yearOf(x.fecha)===y)
+                    .sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
+    const box = $("#superList");
+    if(!items.length){
+      box.innerHTML = emptyBlock("🛒","Sin compras registradas este año.");
+    }else{
+      box.innerHTML = items.map(x=>rowItem(x,"super")).join("");
+      bindDeletes(box,"super");
+    }
+  }
+
+  // ---- Otros (negocios/feria) ----
+  function renderOtros(){
+    const y = S.currentYear, mm = now.getMonth();
+    $("#otrosMonthName").textContent = MONTHS[mm]+" "+y;
+    $("#totNegocio").textContent = fmt(otrosMonth(y,mm,"negocio"));
+    $("#totFeria").textContent = fmt(otrosMonth(y,mm,"feria"));
+
+    const items = S.otros.filter(x=>yearOf(x.fecha)===y)
+                    .sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
+    const box = $("#otrosList");
+    if(!items.length){
+      box.innerHTML = emptyBlock("🥬","Sin movimientos este año.");
+    }else{
+      box.innerHTML = items.map(x=>rowItem(x,"otros")).join("");
+      bindDeletes(box,"otros");
+    }
+  }
+
+  function rowItem(x,kind){
+    let em="🛒", pill='<span class="pill super">Super</span>';
+    if(kind==="otros"){
+      if(x.tipo==="feria"){ em="🥬"; pill='<span class="pill feria">Feria</span>'; }
+      else{ em="🏪"; pill='<span class="pill negocio">Negocio</span>'; }
+    }
+    const d = x.fecha ? fechaLbl(x.fecha) : "";
+    return `<div class="item">
+      <div class="ic">${em}</div>
+      <div class="meta">
+        <div class="t">${escapeHtml(x.detalle||"(sin detalle)")} ${pill}</div>
+        <div class="d">${d}</div>
+      </div>
+      <div class="amt money">${fmt(x.monto)}</div>
+      <button class="del" data-id="${x.id}" title="Eliminar">×</button>
+    </div>`;
+  }
+  function fechaLbl(iso){
+    const p = iso.split("-");
+    return `${p[2]} ${MONTHS[parseInt(p[1],10)-1].slice(0,3).toLowerCase()} ${p[0]}`;
+  }
+  function bindDeletes(box,kind){
+    box.querySelectorAll(".del").forEach(b=>{
+      b.addEventListener("click",()=>{
+        const id=b.dataset.id;
+        if(kind==="super") S.supermercado = S.supermercado.filter(x=>x.id!==id);
+        else S.otros = S.otros.filter(x=>x.id!==id);
+        save(); renderAll(); toast("Eliminado");
+      });
+    });
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  // ---- Comparador ----
+  function renderComparador(){
+    const list = $("#cmpList");
+    if(!S.comparador.length){
+      list.innerHTML = `<div class="card">${emptyBlock("🔎","Agrega productos con sus precios y Megan marcará el más barato en cada supermercado.")}</div>`;
+      $("#cmpSummaryCard").style.display="none";
+      return;
+    }
+    list.innerHTML = S.comparador.map(p=>{
+      const prices=[{k:"jumbo",v:num(p.jumbo)},{k:"unimarc",v:num(p.unimarc)},{k:"lider",v:num(p.lider)}];
+      const withV = prices.filter(x=>x.v>0);
+      const min = withV.length? Math.min(...withV.map(x=>x.v)):0;
+      const max = withV.length? Math.max(...withV.map(x=>x.v)):0;
+      const names={jumbo:"Jumbo",unimarc:"Unimarc",lider:"Líder"};
+      const mkts = prices.map(x=>{
+        const best = x.v>0 && x.v===min && withV.length>1;
+        return `<div class="mkt ${x.k} ${best?'best':''}">
+          <div class="mname">${names[x.k]}</div>
+          <div class="price">$<input type="number" inputmode="numeric" data-id="${p.id}" data-mkt="${x.k}"
+               value="${x.v>0?x.v:''}" placeholder="0"></div>
+        </div>`;
+      }).join("");
+      const saveLine = (withV.length>1 && max>min)
+        ? `<div class="cmp-save">Ahorras hasta ${fmt(max-min)} eligiendo bien</div>` : "";
+      return `<div class="cmp">
+        <div class="cmp-h">
+          <span class="name">${escapeHtml(p.name)}</span>
+          <button class="del" data-del="${p.id}" title="Eliminar"
+            style="width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:var(--muted);font-size:16px">×</button>
+        </div>
+        <div class="cmp-prices">${mkts}</div>
+        ${saveLine}
+      </div>`;
+    }).join("");
+
+    // inline price editing
+    list.querySelectorAll('.mkt input').forEach(inp=>{
+      inp.addEventListener("input",e=>{
+        const p = S.comparador.find(x=>x.id===e.target.dataset.id);
+        if(p){ p[e.target.dataset.mkt]=num(e.target.value); save(); }
+      });
+      inp.addEventListener("change",()=>{ renderComparador(); });
+      inp.addEventListener("focus",e=>e.target.select());
+    });
+    list.querySelectorAll('[data-del]').forEach(b=>{
+      b.addEventListener("click",()=>{
+        S.comparador = S.comparador.filter(x=>x.id!==b.dataset.del);
+        save(); renderComparador(); toast("Producto eliminado");
+      });
+    });
+
+    // Summary: cheapest full basket
+    const totals={jumbo:0,unimarc:0,lider:0}, counts={jumbo:0,unimarc:0,lider:0};
+    S.comparador.forEach(p=>{
+      ["jumbo","unimarc","lider"].forEach(k=>{ if(num(p[k])>0){ totals[k]+=num(p[k]); counts[k]++; } });
+    });
+    const names={jumbo:"Jumbo",unimarc:"Unimarc",lider:"Líder"};
+    const valid = Object.keys(totals).filter(k=>counts[k]>0);
+    if(valid.length){
+      const minTot = Math.min(...valid.map(k=>totals[k]));
+      $("#cmpSummary").innerHTML = ["jumbo","unimarc","lider"].map(k=>{
+        const best = counts[k]>0 && totals[k]===minTot;
+        return `<div class="kpi ${best?'accent':''}">
+          <div class="lbl">${best?'🏆 ':''}${names[k]}</div>
+          <div class="val money">${counts[k]?fmt(totals[k]):'—'}</div>
+          <div class="foot">${counts[k]} producto(s)</div>
+        </div>`;
+      }).join("");
+      $("#cmpSummaryCard").style.display="block";
+    }else{
+      $("#cmpSummaryCard").style.display="none";
+    }
+  }
+
+  // ================= EVENTS =================
+  // Year nav
+  $("#yPrev").onclick = ()=>{ S.currentYear--; save(); renderAll(); };
+  $("#yNext").onclick = ()=>{ S.currentYear++; save(); renderAll(); };
+
+  // Theme
+  function applyTheme(){
+    document.documentElement.setAttribute("data-theme", S.theme);
+    $("#themeBtn").textContent = S.theme==="dark" ? "☀" : "◐";
+  }
+  $("#themeBtn").onclick = ()=>{ S.theme = S.theme==="dark"?"light":"dark"; save(); applyTheme(); };
+
+  // Tabs
+  $$("nav.tabs button").forEach(b=>{
+    b.onclick = ()=>{
+      $$("nav.tabs button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      $$(".view").forEach(v=>v.classList.remove("active"));
+      $("#v-"+b.dataset.view).classList.add("active");
+      window.scrollTo({top:0,behavior:"smooth"});
+    };
+  });
+
+  // Budget save
+  $("#saveBudget").onclick = ()=>{
+    const v = num($("#budgetInput").value);
+    if(v<=0){ toast("Ingresa un monto válido"); return; }
+    S.presupuestoSuper = v; $("#budgetInput").value=""; save(); renderSuper(); renderResumen();
+    toast("Presupuesto actualizado ✓");
+  };
+  $("#budgetInput").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#saveBudget").click(); });
+
+  // Super add
+  $("#spAdd").onclick = ()=>{
+    const monto = num($("#spMonto").value);
+    const fecha = $("#spFecha").value || todayISO();
+    const detalle = $("#spDetalle").value.trim();
+    if(monto<=0){ toast("Ingresa un monto"); return; }
+    S.supermercado.push({id:uid(),fecha,detalle,monto});
+    save();
+    $("#spMonto").value=""; $("#spDetalle").value="";
+    renderSuper(); renderResumen(); toast("Compra registrada ✓");
+  };
+
+  // Otros add
+  $("#ofAdd").onclick = ()=>{
+    const monto = num($("#ofMonto").value);
+    const fecha = $("#ofFecha").value || todayISO();
+    const tipo = $("#ofTipo").value;
+    const detalle = $("#ofDetalle").value.trim();
+    if(monto<=0){ toast("Ingresa un monto"); return; }
+    S.otros.push({id:uid(),tipo,fecha,detalle,monto});
+    save();
+    $("#ofMonto").value=""; $("#ofDetalle").value="";
+    renderOtros(); renderResumen(); toast("Movimiento registrado ✓");
+  };
+
+  // Comparador add
+  $("#cpAdd").onclick = ()=>{
+    const name = $("#cpName").value.trim();
+    if(!name){ toast("Escribe el nombre del producto"); return; }
+    S.comparador.unshift({
+      id:uid(), name,
+      jumbo:num($("#cpJumbo").value),
+      unimarc:num($("#cpUni").value),
+      lider:num($("#cpLider").value)
+    });
+    save();
+    ["#cpName","#cpJumbo","#cpUni","#cpLider"].forEach(s=>$(s).value="");
+    renderComparador(); toast("Producto agregado ✓");
+    $("#cpName").focus();
+  };
+  $("#cpName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#cpLider").focus(); });
+  $("#cpLider").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#cpAdd").click(); });
+
+  // ---------- init ----------
+  $("#spFecha").value = todayISO();
+  $("#ofFecha").value = todayISO();
+  applyTheme();
+  renderAll();
+
+})();
+</script>
